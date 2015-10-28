@@ -40,6 +40,7 @@ THE SOFTWARE.
     <select name="archiveMethod">
       <f:option value="TAR" selected='${instance.archiveMethod=="TAR"}'>${%Gzipped tar}</f:option>
       <f:option value="TARONLY" selected='${instance.archiveMethod=="TARONLY"}'>${%Tar}</f:option>
+      <f:option value="TAR-NATIVE" selected='${instance.archiveMethod=="TAR-NATIVE"}'>${%Tar native}</f:option>
       <f:option value="ZIP" selected='${instance.archiveMethod=="ZIP"}'>${%Zipped}</f:option>
     </select>
   </f:entry>
