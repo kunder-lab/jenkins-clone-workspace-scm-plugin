@@ -19,11 +19,14 @@ public class NativeTarUtil {
 
             LinkedList<String> cmds = new LinkedList<String>();
 
+            includeGlob = includeGlob.replaceAll(",", " ");
+
             LinkedList<String> excludes = new LinkedList<String>();
             excludes.add("--exclude=tmp.tar");
             if(excludeGlob != null && excludeGlob.length() > 0) {
+                excludeGlob = excludeGlob.replaceAll(",", " ");
                 for (String s: excludeGlob.split(" ")) {
-                    excludes.add("--exclude="+"\""+s+"\"");
+                    excludes.add("--exclude="+s);
                 }
             }
 
@@ -31,11 +34,12 @@ public class NativeTarUtil {
             if(excludes.size() > 0) {
                 cmds.addAll(excludes);
             }
-            cmds.add("-cvf");
+            cmds.add("-cf");
             cmds.add("tmp.tar");
-            if(includeGlob.equals("**/*")) {
+            if(includeGlob.equals("**/*") || includeGlob.equals("**")) {
                 includeGlob = ".";
             }
+
             cmds.add(includeGlob);
 
             procStarter = procStarter.pwd(workspaceSource)
