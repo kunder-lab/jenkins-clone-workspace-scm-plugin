@@ -23,12 +23,7 @@
  */
 package hudson.plugins.cloneworkspace;
 
-import hudson.WorkspaceSnapshot;
-import hudson.FileSystemProvisioner;
-import hudson.Util;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.Extension;
+import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
@@ -53,6 +48,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import java.lang.annotation.Native;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -91,6 +87,7 @@ public class CloneWorkspacePublisher extends Recorder {
      * If true, don't use the Ant default file glob excludes.
      */
     private final boolean overrideDefaultExcludes;
+
     @DataBoundConstructor
     public CloneWorkspacePublisher(String workspaceGlob, String workspaceExcludeGlob, String criteria, String archiveMethod, boolean overrideDefaultExcludes) {
         this.workspaceGlob = workspaceGlob.trim();
@@ -108,7 +105,7 @@ public class CloneWorkspacePublisher extends Recorder {
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
-    
+
     public String getWorkspaceGlob() {
         return workspaceGlob;
     }
@@ -135,10 +132,9 @@ public class CloneWorkspacePublisher extends Recorder {
         
         String realIncludeGlob;
         // Default to **/* if no glob is specified.
-        if (workspaceGlob.length()==0) {
+        if (workspaceGlob.length() == 0) {
             realIncludeGlob = "**/*";
-        }
-        else {
+        } else {
             try {
                 realIncludeGlob = build.getEnvironment(listener).expand(workspaceGlob);
             } catch (IOException e) {
@@ -173,9 +169,9 @@ public class CloneWorkspacePublisher extends Recorder {
                     ws.validateAntFileMask(realExcludeGlob);
                 }
                 // This means we found something.
-                if((includeMsg==null) && (excludeMsg==null)) {
-                    DirScanner globScanner = new DirScanner.Glob(realIncludeGlob, realExcludeGlob, !overrideDefaultExcludes);
-                    build.addAction(snapshot(build, ws, globScanner, listener, archiveMethod));
+                if ((includeMsg == null) && (excludeMsg == null)) {
+
+                    build.addAction(snapshot(build, ws, realIncludeGlob, realExcludeGlob, !overrideDefaultExcludes, launcher, listener, archiveMethod));
 
                     // Find the next most recent build meeting this criteria with an archived snapshot.
                     AbstractBuild<?,?> previousArchivedBuild = CloneWorkspaceUtil.getMostRecentBuildForCriteriaWithSnapshot(build.getPreviousBuild(), criteria);
@@ -191,8 +187,7 @@ public class CloneWorkspacePublisher extends Recorder {
                     }
 
                     return true;
-                }
-                else {
+                } else {
                     listener.getLogger().println(Messages.CloneWorkspacePublisher_NoMatchFound(realIncludeGlob,includeMsg));
                     return true;
                 }
@@ -207,14 +202,14 @@ public class CloneWorkspacePublisher extends Recorder {
                 return true;
             }
 
-        }
-        else {
+        } else {
             listener.getLogger().println(Messages.CloneWorkspacePublisher_CriteriaNotMet(criteriaResult));
             return true;
         }
     }        
 
-    public WorkspaceSnapshot snapshot(AbstractBuild<?,?> build, FilePath ws, DirScanner scanner, TaskListener listener, String archiveMethod) throws IOException, InterruptedException {
+    public WorkspaceSnapshot snapshot(AbstractBuild<?, ?> build, FilePath ws, String includeGlob, String excludeGlob, Boolean overwriteDefaultExcludes, Launcher launcher, TaskListener listener, String archiveMethod) throws IOException, InterruptedException {
+        DirScanner scanner = new DirScanner.Glob(includeGlob, excludeGlob, !overrideDefaultExcludes);
         File wss = new File(build.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod(archiveMethod));
         if (archiveMethod.equals("ZIP")) {
             OutputStream os = new BufferedOutputStream(new FileOutputStream(wss));
@@ -225,6 +220,19 @@ public class CloneWorkspacePublisher extends Recorder {
             }
 
             return new WorkspaceSnapshotZip();
+        } else if (archiveMethod.equals("TARONLY")) {
+            OutputStream os = new BufferedOutputStream(FilePath.TarCompression.NONE.compress(new FileOutputStream(wss)));
+            try {
+                ws.tar(os, scanner);
+            } finally {
+                os.close();
+            }
+
+            return new WorkspaceSnapshotTarOnly();
+        } else if (archiveMethod.equals("TAR-NATIVE")) {
+            NativeTarUtil.archive(build.getWorkspace(), wss, includeGlob, excludeGlob, launcher, listener);
+
+            return new WorkspaceSnapshotTarNative();
         } else {
             OutputStream os = new BufferedOutputStream(FilePath.TarCompression.GZIP.compress(new FileOutputStream(wss)));
             try {
@@ -241,6 +249,23 @@ public class CloneWorkspacePublisher extends Recorder {
         public void restoreTo(AbstractBuild<?,?> owner, FilePath dst, TaskListener listener) throws IOException, InterruptedException {
             File wss = new File(owner.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TAR"));
             new FilePath(wss).untar(dst, FilePath.TarCompression.GZIP);
+        }
+    }
+
+    public static final class WorkspaceSnapshotTarOnly extends WorkspaceSnapshot {
+        public void restoreTo(AbstractBuild<?,?> owner, FilePath dst, TaskListener listener) throws IOException, InterruptedException {
+            File wss = new File(owner.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TARONLY"));
+            new FilePath(wss).untar(dst, FilePath.TarCompression.NONE);
+        }
+    }
+
+    public static final class WorkspaceSnapshotTarNative extends WorkspaceSnapshot {
+        public void restoreTo(AbstractBuild<?, ?> owner, FilePath dst, TaskListener listener) throws IOException, InterruptedException {
+        }
+
+        public void restoreTo(AbstractBuild<?, ?> owner, FilePath dst, TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
+            File wss = new File(owner.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TAR-NATIVE"));
+            NativeTarUtil.unarchive(wss, dst, launcher, listener);
         }
     }
 
