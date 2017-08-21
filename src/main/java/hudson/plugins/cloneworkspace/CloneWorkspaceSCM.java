@@ -205,7 +205,8 @@ public class CloneWorkspaceSCM extends SCM {
     public List<String> getParameterList() {
         ArrayList<String> list = new ArrayList<>();
         ParametersDefinitionProperty prop = (ParametersDefinitionProperty) getContainingProject().getProperty(ParametersDefinitionProperty.class);
-        if (prop != null) {
+        // Check if the run needs parameters to run and parameters are defined
+        if (prop != null && prop.getParameterDefinitions() != null) {
             for (ParameterDefinition param : prop.getParameterDefinitions())
                 list.add("$" + param.getName());
         }
@@ -222,7 +223,6 @@ public class CloneWorkspaceSCM extends SCM {
     public static File getParentBuildFile(AbstractBuild b) {
         return new File(b.getRootDir(),"cloneWorkspaceParent.txt");
     }
-
     
     /**
      * Reads the parent build file of the specified build (or the closest, if the flag is so specified.)
@@ -328,8 +328,6 @@ public class CloneWorkspaceSCM extends SCM {
         }
     }
 
-        
-
     @Extension
     public static class DescriptorImpl extends SCMDescriptor<CloneWorkspaceSCM> {
         public DescriptorImpl() {
@@ -379,7 +377,6 @@ public class CloneWorkspaceSCM extends SCM {
 
         private static final long serialVersionUID = 1L;
     }
-
  
     /**
      * {@link Exception} indicating that the resolution of the job/build failed.
@@ -408,6 +405,6 @@ public class CloneWorkspaceSCM extends SCM {
         }
     }
 
-   private static final Logger LOGGER = Logger.getLogger(CloneWorkspaceSCM.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CloneWorkspaceSCM.class.getName());
 
 }
