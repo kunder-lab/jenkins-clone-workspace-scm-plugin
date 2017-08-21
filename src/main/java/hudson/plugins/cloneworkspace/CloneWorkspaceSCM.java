@@ -212,9 +212,11 @@ public class CloneWorkspaceSCM extends SCM {
         }
         return list;
     }
-     public List<String> getParentAndParamList() {
+    
+    public List<String> getParentAndParamList() {
          return ListUtils.union(getDescriptor().getEligibleParents(), getParameterList());
      }
+    
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl)super.getDescriptor();
