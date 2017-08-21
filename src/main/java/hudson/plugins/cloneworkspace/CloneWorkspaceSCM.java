@@ -144,7 +144,7 @@ public class CloneWorkspaceSCM extends SCM {
             String parentJob = getParamParentJobName(build);
             Snapshot snapshot = resolve(parentJob);
             listener.getLogger().println("Restoring workspace from build #" + snapshot.getParent().getNumber() + " of project " + parentJob);
-            snapshot.restoreTo(workspace,listener);
+            snapshot.restoreTo(workspace, listener, launcher);
 
             // write out the parent build number file
             PrintWriter w = new PrintWriter(new FileOutputStream(getParentBuildFile(build)));
@@ -398,8 +398,12 @@ public class CloneWorkspaceSCM extends SCM {
             this.parent = parent;
         }
 
-        void restoreTo(FilePath dst,TaskListener listener) throws IOException, InterruptedException {
-            snapshot.restoreTo(parent,dst,listener);
+        void restoreTo(FilePath dst,TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
+            if(snapshot instanceof CloneWorkspacePublisher.WorkspaceSnapshotTarNative) {
+                ((CloneWorkspacePublisher.WorkspaceSnapshotTarNative)snapshot).restoreTo(parent,dst, listener, launcher);
+            } else {
+                snapshot.restoreTo(parent, dst, listener);
+            }
         }
 
         AbstractBuild<?,?> getParent() {

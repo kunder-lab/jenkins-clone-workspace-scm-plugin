@@ -74,7 +74,7 @@ public class CloneWorkspaceUtil {
     }
 
     public static Run<?,?> getMostRecentRunForCriteriaWithSnapshot(Run<?,?> project, String criteria) {
-        return getMostRecentRunForCriteriaWithSnapshot(project.getPreviousBuild(), getResultForCriteria(criteria));
+        return getMostRecentRunForCriteriaWithSnapshot(project, getResultForCriteria(criteria));
     }
 
     public static Run<?,?> getMostRecentRunForCriteriaWithSnapshot(Run<?,?> baseBuild, Result criteriaResult) {
@@ -139,6 +139,8 @@ public class CloneWorkspaceUtil {
     public static String getFileNameForMethod(String method) {
         if ("ZIP".equals(method)) {
             return "workspace.zip";
+        } else if ("TARONLY".equals(method) || "TAR-NATIVE".equals(method)) {
+            return "workspace.tar";
         } else {
             return "workspace.tar.gz";
         }
