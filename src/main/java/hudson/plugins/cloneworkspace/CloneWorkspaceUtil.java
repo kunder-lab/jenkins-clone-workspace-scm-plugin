@@ -74,7 +74,7 @@ public class CloneWorkspaceUtil {
     }
 
     public static Run<?,?> getMostRecentRunForCriteriaWithSnapshot(Run<?,?> project, String criteria) {
-        return getMostRecentRunForCriteriaWithSnapshot(project.getPreviousBuild(), getResultForCriteria(criteria));
+        return getMostRecentRunForCriteriaWithSnapshot(project, getResultForCriteria(criteria));
     }
 
     public static Run<?,?> getMostRecentRunForCriteriaWithSnapshot(Run<?,?> baseBuild, Result criteriaResult) {

@@ -17,11 +17,11 @@ public class NativeTarUtil {
 
             Launcher.ProcStarter procStarter = launcher.launch();
 
-            LinkedList<String> cmds = new LinkedList<String>();
+            LinkedList<String> cmds = new LinkedList<>();
 
             includeGlob = includeGlob.replaceAll(",", " ");
 
-            LinkedList<String> excludes = new LinkedList<String>();
+            LinkedList<String> excludes = new LinkedList<>();
             excludes.add("--exclude=tmp.tar");
             if(excludeGlob != null && excludeGlob.length() > 0) {
                 excludeGlob = excludeGlob.replaceAll(",", " ");
