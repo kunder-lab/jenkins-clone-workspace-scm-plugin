@@ -139,6 +139,8 @@ public class CloneWorkspaceUtil {
     public static String getFileNameForMethod(String method) {
         if ("ZIP".equals(method)) {
             return "workspace.zip";
+        } else if ("TARONLY".equals(method) || "TAR-NATIVE".equals(method)) {
+            return "workspace.tar";
         } else {
             return "workspace.tar.gz";
         }
