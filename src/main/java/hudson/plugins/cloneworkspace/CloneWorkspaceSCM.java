@@ -146,12 +146,9 @@ public class CloneWorkspaceSCM extends SCM {
             listener.getLogger().println("Restoring workspace from build #" + snapshot.getParent().getNumber() + " of project " + parentJob);
             snapshot.restoreTo(workspace, listener, launcher);
 
-            // write out the parent build number file
-            PrintWriter w = new PrintWriter(new FileOutputStream(getParentBuildFile(build)));
-            try {
+            try ( // write out the parent build number file
+                PrintWriter w = new PrintWriter(new FileOutputStream(getParentBuildFile(build)))) {
                 w.println(snapshot.getParent().getNumber());
-            } finally {
-                w.close();
             }
             
             return calcChangeLog(snapshot.getParent(), changelogFile, listener);
@@ -258,8 +255,7 @@ public class CloneWorkspaceSCM extends SCM {
                 // nothing to compare against
                 return parentBuildNumber;
 
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            try {
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                 String line;
                 while((line=br.readLine())!=null) {
                     try {
@@ -268,8 +264,6 @@ public class CloneWorkspaceSCM extends SCM {
                         // perhaps a corrupted line. ignore
                     }
                 }
-            } finally {
-                br.close();
             }
         }
 
