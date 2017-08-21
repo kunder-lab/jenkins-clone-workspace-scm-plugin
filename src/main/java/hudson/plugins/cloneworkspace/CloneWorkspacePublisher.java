@@ -301,8 +301,7 @@ public class CloneWorkspacePublisher extends Recorder implements SimpleBuildStep
     }
 
     @Symbol("CloneWorkspace")
-    @Extension
-    public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+    @Extension public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         public DescriptorImpl() {
             super(CloneWorkspacePublisher.class);
         }
