@@ -319,7 +319,11 @@ public class CloneWorkspacePublisher extends Recorder implements SimpleBuildStep
          * @throws java.io.IOException Exception
          */
         public FormValidation doCheckWorkspaceGlob(@AncestorInPath AbstractProject project, @QueryParameter String value) throws IOException {
-            return FilePath.validateFileMask(project.getSomeWorkspace(),value);
+            if(project != null) {
+                return FilePath.validateFileMask(project.getSomeWorkspace(), value);
+            } else {
+                return null;
+            }
         }
 
         @Override
