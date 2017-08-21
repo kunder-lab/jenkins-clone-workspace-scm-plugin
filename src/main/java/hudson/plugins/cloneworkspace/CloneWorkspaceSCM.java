@@ -35,7 +35,6 @@ import hudson.model.AbstractProject;
 import hudson.model.TaskListener;
 import hudson.model.ParametersAction;
 import hudson.model.BuildListener;
-import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.Launcher;
 import hudson.FilePath;
