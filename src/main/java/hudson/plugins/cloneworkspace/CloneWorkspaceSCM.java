@@ -59,6 +59,7 @@ import net.sf.json.JSONObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Run;
+import hudson.scm.NullChangeLogParser;
 import jenkins.model.Jenkins;
 
 import org.kohsuke.stapler.StaplerRequest;
@@ -185,11 +186,18 @@ public class CloneWorkspaceSCM extends SCM {
         }
 
         try {
-            return resolve(getParamParentJobName(lastBuild)).getParent().getProject().getScm().createChangeLogParser();
+            Run<?,?> r = resolve(getParamParentJobName(lastBuild)).getParent();
+            if(r instanceof AbstractBuild<?,?>) {
+                return ((AbstractBuild<?,?>)r).getProject().getScm().createChangeLogParser();
+            } else {
+                return new NullChangeLogParser();
+            }
         } catch (ResolvedFailedException e) {
             return null;
         }
     }
+    
+    
 
     private AbstractProject getContainingProject() {
         for( AbstractProject p : Jenkins.getInstance().getAllItems(AbstractProject.class) ) {
