@@ -61,7 +61,8 @@ public class CloneWorkspaceUtil {
     public static Run<?,?> getMostRecentRunForCriteria(Run<?,?> baseBuild, Result criteriaResult) {
         if ((baseBuild == null)
             || ((!baseBuild.isBuilding()) && (baseBuild.getResult() != null)
-                && (baseBuild.getResult().isBetterOrEqualTo(criteriaResult)))) {
+                && (baseBuild.getResult().isBetterOrEqualTo(criteriaResult)))
+            || ((baseBuild.isBuilding()) && criteriaResult.equals(Result.FAILURE))) { // Only jobs with "Any" condition will be true
             return baseBuild;
         }
         else {
