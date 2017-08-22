@@ -41,6 +41,7 @@ import hudson.FilePath;
 import hudson.WorkspaceSnapshot;
 import hudson.Extension;
 import static hudson.Util.fixEmptyAndTrim;
+import hudson.model.Job;
 import org.apache.commons.collections.ListUtils;
 
 import java.io.IOException;
@@ -57,6 +58,7 @@ import java.util.logging.Logger;
 import net.sf.json.JSONObject;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.model.Run;
 import jenkins.model.Jenkins;
 
 import org.kohsuke.stapler.StaplerRequest;
@@ -115,9 +117,9 @@ public class CloneWorkspaceSCM extends SCM {
      */
     public Snapshot resolve(String parentJob) throws ResolvedFailedException {
         Jenkins h = Jenkins.getInstance();
-        AbstractProject<?,?> job = h.getItemByFullName(parentJob, AbstractProject.class);
-        if(job==null) {
-            if(h.getItemByFullName(parentJob)==null) {
+        Job<?,?> job = h.getItemByFullName(parentJob, Job.class);
+        if(job==null) { 
+           if(h.getItemByFullName(parentJob)==null) {
                 AbstractProject nearest = AbstractProject.findNearest(parentJob);
                 throw new ResolvedFailedException(Messages.CloneWorkspaceSCM_NoSuchJob(parentJob,nearest.getFullName()));
             } else
@@ -125,7 +127,7 @@ public class CloneWorkspaceSCM extends SCM {
         }
 
         
-        AbstractBuild<?,?> b = CloneWorkspaceUtil.getMostRecentBuildForCriteria(job,criteria);
+        Run<?,?> b = CloneWorkspaceUtil.getMostRecentRunForCriteria(job.getLastBuild(),criteria);
         
         if(b==null)
             throw new ResolvedFailedException(Messages.CloneWorkspaceSCM_NoBuild(criteria,parentJob));
@@ -162,7 +164,7 @@ public class CloneWorkspaceSCM extends SCM {
     /**
      * Called after checkout has finished to copy the changelog from the parent build.
      */
-    private boolean calcChangeLog(AbstractBuild<?,?> parentBuild, File changelogFile, BuildListener listener) throws IOException, InterruptedException {
+    private boolean calcChangeLog(Run<?,?> parentBuild, File changelogFile, BuildListener listener) throws IOException, InterruptedException {
         FilePath parentChangeLog = new FilePath(new File(parentBuild.getRootDir(), "changelog.xml"));
         if (parentChangeLog.exists()) {
             FilePath childChangeLog = new FilePath(changelogFile);
@@ -186,7 +188,7 @@ public class CloneWorkspaceSCM extends SCM {
             return resolve(getParamParentJobName(lastBuild)).getParent().getProject().getScm().createChangeLogParser();
         } catch (ResolvedFailedException e) {
             return null;
-        } 
+        }
     }
 
     private AbstractProject getContainingProject() {
@@ -385,22 +387,22 @@ public class CloneWorkspaceSCM extends SCM {
 
     private static class Snapshot {
         final WorkspaceSnapshot snapshot;
-        final AbstractBuild<?,?> parent;
+        final Run<?,?> parent;
 
-        private Snapshot(WorkspaceSnapshot snapshot, AbstractBuild<?,?> parent) {
+        private Snapshot(WorkspaceSnapshot snapshot, Run<?,?> parent) {
             this.snapshot = snapshot;
             this.parent = parent;
         }
 
-        void restoreTo(FilePath dst,TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
+        void restoreTo(FilePath dst, TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
             if(snapshot instanceof CloneWorkspacePublisher.WorkspaceSnapshotTarNative) {
-                ((CloneWorkspacePublisher.WorkspaceSnapshotTarNative)snapshot).restoreTo(parent,dst, listener, launcher);
-            } else {
-                snapshot.restoreTo(parent, dst, listener);
+                ((CloneWorkspacePublisher.WorkspaceSnapshotTarNative)snapshot).restoreTo(parent, dst, listener, launcher);
+            } else if(snapshot instanceof CloneWorkspacePublisher.WorkspaceSnapshotBase) {
+                ((CloneWorkspacePublisher.WorkspaceSnapshotBase)snapshot).restoreTo(parent, dst, listener);
             }
         }
 
-        AbstractBuild<?,?> getParent() {
+        Run<?,?> getParent() {
             return parent;
         }
     }

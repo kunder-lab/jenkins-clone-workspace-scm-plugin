@@ -298,43 +298,69 @@ public class CloneWorkspacePublisher extends Recorder implements SimpleBuildStep
             }
         }
     }
-    
-    public static final class WorkspaceSnapshotTar extends WorkspaceSnapshot {
+
+    public static abstract class WorkspaceSnapshotBase extends WorkspaceSnapshot {
+        public abstract void restoreTo(Run<?, ?> run, FilePath fp, TaskListener tl) throws IOException, InterruptedException;
+    }
+
+    public static final class WorkspaceSnapshotTar extends WorkspaceSnapshotBase {
         @Override
         public void restoreTo(AbstractBuild<?,?> owner, FilePath dst, TaskListener listener) throws IOException, InterruptedException {
             File wss = new File(owner.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TAR"));
             new FilePath(wss).untar(dst, FilePath.TarCompression.GZIP);
         }
+
+        @Override
+        public void restoreTo(Run<?, ?> run, FilePath fp, TaskListener tl) throws IOException, InterruptedException {
+            File wss = new File(run.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TAR"));
+            new FilePath(wss).untar(fp, FilePath.TarCompression.GZIP);
+        }
     }
 
-    public static final class WorkspaceSnapshotTarOnly extends WorkspaceSnapshot {
+    public static final class WorkspaceSnapshotTarOnly extends WorkspaceSnapshotBase {
         @Override
         public void restoreTo(AbstractBuild<?,?> owner, FilePath dst, TaskListener listener) throws IOException, InterruptedException {
             File wss = new File(owner.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TARONLY"));
             new FilePath(wss).untar(dst, FilePath.TarCompression.NONE);
         }
+
+        @Override
+        public void restoreTo(Run<?, ?> run, FilePath fp, TaskListener tl) throws IOException, InterruptedException {
+            File wss = new File(run.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TARONLY"));
+            new FilePath(wss).untar(fp, FilePath.TarCompression.NONE);
+        }
     }
 
-    public static final class WorkspaceSnapshotTarNative extends WorkspaceSnapshot {
+    public static final class WorkspaceSnapshotTarNative extends WorkspaceSnapshotBase {
         @Override
         public void restoreTo(AbstractBuild<?, ?> owner, FilePath dst, TaskListener listener) throws IOException, InterruptedException {
         }
 
-        public void restoreTo(AbstractBuild<?, ?> owner, FilePath dst, TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
+        @Override
+        public void restoreTo(Run<?, ?> run, FilePath fp, TaskListener tl) throws IOException, InterruptedException {
+        }
+
+        public void restoreTo(Run<?, ?> owner, FilePath dst, TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
             File wss = new File(owner.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("TAR-NATIVE"));
             NativeTarUtil.unarchive(wss, dst, launcher, listener);
         }
     }
 
-    public static final class WorkspaceSnapshotZip extends WorkspaceSnapshot {
+    public static final class WorkspaceSnapshotZip extends WorkspaceSnapshotBase {
         @Override
         public void restoreTo(AbstractBuild<?,?> owner, FilePath dst, TaskListener listener) throws IOException, InterruptedException {
             File wss = new File(owner.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("ZIP"));
             new FilePath(wss).unzip(dst);
         }
+
+        @Override
+        public void restoreTo(Run<?, ?> run, FilePath fp, TaskListener tl) throws IOException, InterruptedException {
+            File wss = new File(run.getRootDir(), CloneWorkspaceUtil.getFileNameForMethod("ZIP"));
+            new FilePath(wss).unzip(fp);
+        }
     }
 
-    @Symbol("CloneWorkspace")
+    @Symbol("cloneWorkspace")
     @Extension public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         public DescriptorImpl() {
             super(CloneWorkspacePublisher.class);
