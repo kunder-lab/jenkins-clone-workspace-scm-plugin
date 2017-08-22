@@ -218,11 +218,8 @@ public class CloneWorkspacePublisher extends Recorder implements SimpleBuildStep
                 return new WorkspaceSnapshotZip();
             case "TARONLY":
             {
-                OutputStream os = new BufferedOutputStream(FilePath.TarCompression.NONE.compress(new FileOutputStream(wss)));
-                try {
+                try (OutputStream os = new BufferedOutputStream(FilePath.TarCompression.NONE.compress(new FileOutputStream(wss)))) {
                     ws.tar(os, scanner);
-                } finally {
-                    os.close();
                 }
                 
                 return new WorkspaceSnapshotTarOnly();

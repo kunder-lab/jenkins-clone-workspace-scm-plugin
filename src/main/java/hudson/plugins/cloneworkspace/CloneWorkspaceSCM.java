@@ -128,7 +128,8 @@ public class CloneWorkspaceSCM extends SCM {
         }
 
         
-        Run<?,?> b = CloneWorkspaceUtil.getMostRecentRunForCriteria(job.getLastBuild(),criteria);
+        Run<?,?> b;
+        b = CloneWorkspaceUtil.getMostRecentRunForCriteria(job.getLastBuild(),criteria);
         
         if(b==null)
             throw new ResolvedFailedException(Messages.CloneWorkspaceSCM_NoBuild(criteria,parentJob));
